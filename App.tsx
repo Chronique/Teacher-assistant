@@ -23,6 +23,22 @@ const INITIAL_STATE: AppState = {
   contacts: []
 };
 
+// Komponen Item Bantuan Kecil
+const HelpItem = ({ icon, color, title, desc, example }: {icon:string, color:string, title:string, desc:string, example:string}) => (
+  <div className="flex gap-4 items-start">
+    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${color}`}>
+      <span className="material-symbols-rounded text-lg">{icon}</span>
+    </div>
+    <div className="flex-1">
+      <h3 className="font-black text-sm text-gray-900 dark:text-white">{title}</h3>
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-tight">{desc}</p>
+      <div className="bg-gray-50 dark:bg-black/30 px-3 py-2 rounded-xl border border-gray-100 dark:border-gray-800">
+        <p className="text-[10px] text-indigo-600 dark:text-indigo-400 font-medium italic">"{example}"</p>
+      </div>
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
     try {
@@ -61,6 +77,7 @@ Ada yang bisa saya bantu sekarang?`,
   const [view, setView] = useState<'chat' | 'dashboard' | 'contacts'>('chat');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -275,6 +292,61 @@ Ada yang bisa saya bantu sekarang?`,
         </div>
       )}
 
+      {/* Help Modal */}
+      {showHelpModal && (
+        <div className="fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setShowHelpModal(false)}>
+          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-[32px] p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto scroll-hide" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white dark:bg-gray-900 z-10 pb-2 border-b border-gray-50 dark:border-gray-800">
+              <div>
+                 <h2 className="text-xl font-black text-gray-900 dark:text-white tracking-tight">Pusat Bantuan</h2>
+                 <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Daftar Perintah Suara & Teks</p>
+              </div>
+              <button onClick={() => setShowHelpModal(false)} className="p-2 bg-gray-50 dark:bg-gray-800 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <span className="material-symbols-rounded text-gray-400 text-sm">close</span>
+              </button>
+            </div>
+            
+            <div className="space-y-6 pb-4">
+              <HelpItem 
+                 icon="notifications_active" 
+                 color="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                 title="Pengingat & Google Sync" 
+                 desc="Otomatis sinkron ke Google Calendar & Tasks."
+                 example="Ingatkan saya besok jam 8 pagi ada rapat dewan guru."
+              />
+              <HelpItem 
+                 icon="table_chart" 
+                 color="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+                 title="Rekap Nilai Siswa" 
+                 desc="Input manual atau upload foto tabel/Excel/PDF."
+                 example="Masukkan nilai Matematika Andi kelas 9A dapat 85."
+              />
+              <HelpItem 
+                 icon="face" 
+                 color="bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400"
+                 title="Rekap Sikap/Perilaku" 
+                 desc="Catat kejadian penting siswa (Pelanggaran/Prestasi)."
+                 example="Catat sikap Budi hari ini berkelahi di kantin, nilai C."
+              />
+              <HelpItem 
+                 icon="calendar_month" 
+                 color="bg-rose-50 text-rose-600 dark:bg-rose-900/20 dark:text-rose-400"
+                 title="Jadwal Mengajar" 
+                 desc="Simpan roster pelajaran Anda ke dashboard."
+                 example="Saya mengajar IPA hari Senin jam 07.30 di 7B."
+              />
+              <HelpItem 
+                 icon="contacts" 
+                 color="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+                 title="Kontak Orang Tua" 
+                 desc="Simpan nomor HP untuk akses cepat WhatsApp."
+                 example="Simpan nomor Pak Budi orang tua Andi 08123456789."
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="shrink-0 px-5 h-16 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
@@ -287,7 +359,13 @@ Ada yang bisa saya bantu sekarang?`,
           <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">GuruMate</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500"><span className="material-symbols-rounded">{darkMode ? 'light_mode' : 'dark_mode'}</span></button>
+          <button 
+            onClick={() => setShowHelpModal(true)} 
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
+          >
+            <span className="material-symbols-rounded text-[20px] font-bold">help</span>
+          </button>
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"><span className="material-symbols-rounded">{darkMode ? 'light_mode' : 'dark_mode'}</span></button>
           <img src={state.user.photo} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm cursor-pointer" alt="Avatar" onClick={handleLogout} />
         </div>
       </header>
