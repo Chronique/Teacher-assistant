@@ -2,7 +2,6 @@
 import { GoogleGenAI, Type, FunctionDeclaration, GenerateContentResponse } from "@google/genai";
 import { AppState } from "../types";
 
-// Pastikan window.process.env ada sebelum diakses
 const getApiKey = () => {
   if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
     return (window as any).process.env.API_KEY;
@@ -15,14 +14,14 @@ const ai = new GoogleGenAI({ apiKey });
 
 const addScheduleFn: FunctionDeclaration = {
   name: 'addSchedule',
-  description: 'Menambahkan jadwal mata pelajaran baru.',
+  description: 'Menambahkan jadwal mata pelajaran baru ke database lokal.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      day: { type: Type.STRING, description: 'Hari (contoh: Senin, Selasa)' },
-      subject: { type: Type.STRING, description: 'Nama mata pelajaran' },
-      time: { type: Type.STRING, description: 'Waktu (contoh: 08:00 - 09:30)' },
-      className: { type: Type.STRING, description: 'Nama kelas' },
+      day: { type: Type.STRING, description: 'Hari' },
+      subject: { type: Type.STRING, description: 'Mapel' },
+      time: { type: Type.STRING, description: 'Waktu' },
+      className: { type: Type.STRING, description: 'Kelas' },
     },
     required: ['day', 'subject', 'time', 'className'],
   },
@@ -34,9 +33,9 @@ const addGradeFn: FunctionDeclaration = {
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama lengkap siswa' },
-      subject: { type: Type.STRING, description: 'Mata pelajaran' },
-      score: { type: Type.NUMBER, description: 'Nilai angka' },
+      studentName: { type: Type.STRING, description: 'Nama' },
+      subject: { type: Type.STRING, description: 'Mapel' },
+      score: { type: Type.NUMBER, description: 'Nilai' },
     },
     required: ['studentName', 'subject', 'score'],
   },
@@ -44,18 +43,14 @@ const addGradeFn: FunctionDeclaration = {
 
 const addActivityFn: FunctionDeclaration = {
   name: 'addActivity',
-  description: 'Mencatat rangkuman kegiatan atau perilaku siswa.',
+  description: 'Mencatat kegiatan siswa.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama lengkap siswa' },
-      description: { type: Type.STRING, description: 'Deskripsi kegiatan/perilaku' },
-      category: { 
-        type: Type.STRING, 
-        description: 'Kategori kegiatan',
-        enum: ['Akademik', 'Perilaku', 'Ekstrakurikuler'] 
-      },
-      date: { type: Type.STRING, description: 'Tanggal (YYYY-MM-DD)' },
+      studentName: { type: Type.STRING, description: 'Nama' },
+      description: { type: Type.STRING, description: 'Kegiatan' },
+      category: { type: Type.STRING, enum: ['Akademik', 'Perilaku', 'Ekstrakurikuler'] },
+      date: { type: Type.STRING, description: 'Tanggal' },
     },
     required: ['studentName', 'description', 'category', 'date'],
   },
@@ -63,17 +58,13 @@ const addActivityFn: FunctionDeclaration = {
 
 const addReminderFn: FunctionDeclaration = {
   name: 'addReminder',
-  description: 'Menambahkan pengingat untuk tugas atau kegiatan guru.',
+  description: 'Menambahkan pengingat tugas yang akan disinkronkan ke Google Reminder/Tasks.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      text: { type: Type.STRING, description: 'Isi pengingat' },
-      date: { type: Type.STRING, description: 'Tanggal atau waktu pengingat' },
-      priority: { 
-        type: Type.STRING, 
-        description: 'Tingkat kepentingan',
-        enum: ['Rendah', 'Sedang', 'Tinggi']
-      },
+      text: { type: Type.STRING, description: 'Isi Pengingat' },
+      date: { type: Type.STRING, description: 'Waktu/Tanggal (format bebas atau ISO)' },
+      priority: { type: Type.STRING, enum: ['Rendah', 'Sedang', 'Tinggi'] },
     },
     required: ['text', 'date', 'priority'],
   },
@@ -81,13 +72,13 @@ const addReminderFn: FunctionDeclaration = {
 
 const generateParentReportFn: FunctionDeclaration = {
   name: 'generateParentReport',
-  description: 'Membuat draf laporan perkembangan siswa untuk dikirim ke orang tua via WhatsApp.',
+  description: 'Membuat laporan untuk orang tua via WhatsApp.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama siswa' },
-      phoneNumber: { type: Type.STRING, description: 'Nomor WhatsApp orang tua' },
-      content: { type: Type.STRING, description: 'Isi pesan WhatsApp yang lengkap dan sopan' },
+      studentName: { type: Type.STRING },
+      phoneNumber: { type: Type.STRING },
+      content: { type: Type.STRING },
     },
     required: ['studentName', 'phoneNumber', 'content'],
   },
@@ -95,14 +86,14 @@ const generateParentReportFn: FunctionDeclaration = {
 
 const syncContactsFn: FunctionDeclaration = {
   name: 'syncContacts',
-  description: 'Menambahkan atau memperbarui kontak orang tua siswa.',
+  description: 'Menyimpan kontak orang tua siswa.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama siswa' },
-      parentName: { type: Type.STRING, description: 'Nama orang tua' },
-      phoneNumber: { type: Type.STRING, description: 'Nomor WhatsApp' },
-      className: { type: Type.STRING, description: 'Kelas' },
+      studentName: { type: Type.STRING },
+      parentName: { type: Type.STRING },
+      phoneNumber: { type: Type.STRING },
+      className: { type: Type.STRING },
     },
     required: ['studentName', 'parentName', 'phoneNumber', 'className']
   },
@@ -114,49 +105,34 @@ export const chatWithGemini = async (
   history: { role: string; parts: any[] }[] = [],
   fileData?: { mimeType: string; data: string }
 ) => {
-  if (!apiKey) {
-    throw new Error("API Key tidak ditemukan. Pastikan sudah diatur di environment variable.");
-  }
+  if (!apiKey) throw new Error("API Key Missing");
   
   try {
     const userParts: any[] = [{ text: prompt }];
-    if (fileData) {
-      userParts.push({
-        inlineData: fileData
-      });
-    }
+    if (fileData) userParts.push({ inlineData: fileData });
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: [...history, { role: 'user', parts: userParts }],
       config: {
-        systemInstruction: `Anda adalah GuruMate, asisten pribadi multimodal untuk guru di Indonesia. 
-        Tugas Anda membantu mengelola administrasi kelas.
+        systemInstruction: `Anda adalah GuruMate AI, asisten pribadi multimodal yang terintegrasi dengan ekosistem Google (Gmail/Tasks).
         
-        KEMAMPUAN KHUSUS:
-        1. Anda dapat menerima unggahan file gambar (seperti foto catatan nilai) untuk dianalisis dan dimasukkan ke sistem.
-        2. Anda dapat membantu guru mencatat jadwal, nilai, kegiatan, dan kontak orang tua.
+        KEMAMPUAN INTEGRASI GOOGLE:
+        - User (Guru) masuk menggunakan akun GMAIL.
+        - Setiap fungsi 'addReminder' akan disinkronkan ke Google Tasks/Reminder user. Pastikan Anda menginformasikan ini kepada user setelah mereka membuat pengingat.
         
-        PENTING:
-        - Saat ini data aplikasi masih KOSONG. Bantu bapak/ibu guru untuk mengisi datanya.
-        - Jika guru meminta kirim laporan tapi nomor WhatsApp tidak ada di daftar kontak, tanyakan nomornya atau mintalah untuk menambah kontak terlebih dahulu.
+        KEMAMPUAN MULTIMODAL:
+        - Anda dapat menganalisis GAMBAR dan DOKUMEN (PDF, Excel, Word).
+        - Ekstrak data dari file tersebut (misal: daftar nilai atau jadwal) dan gunakan function call yang sesuai.
         
-        FITUR UTAMA:
-        - Jadwal Pelajaran (Tambah & Cek)
-        - Nilai Siswa (Input & Rekap)
-        - Rangkuman Kegiatan Siswa
-        - Pengingat/Reminder
-        - Laporan WhatsApp untuk Orang Tua
-        - Manajemen Kontak Orang Tua
-        
-        Berikan jawaban yang ramah, profesional, dan gunakan bahasa Indonesia yang baik.`,
+        Berikan jawaban dalam Bahasa Indonesia yang sopan, ringkas, dan sangat membantu pekerjaan guru.`,
         tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addActivityFn, addReminderFn, generateParentReportFn, syncContactsFn] }],
       },
     });
 
     return response;
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error(error);
     throw error;
   }
 };

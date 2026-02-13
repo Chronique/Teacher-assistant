@@ -27,6 +27,7 @@ export interface Reminder {
   text: string;
   date: string;
   priority: 'Rendah' | 'Sedang' | 'Tinggi';
+  googleSynced?: boolean;
 }
 
 export interface ParentReport {
@@ -45,7 +46,14 @@ export interface StudentContact {
   className: string;
 }
 
+export interface UserProfile {
+  name: string;
+  email: string;
+  photo: string;
+}
+
 export interface AppState {
+  user: UserProfile | null;
   schedules: Schedule[];
   grades: StudentGrade[];
   activities: StudentActivity[];
