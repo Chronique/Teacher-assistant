@@ -30,7 +30,7 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { 
       role: 'model', 
-      text: 'Halo Bapak/Ibu Guru! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Silakan kirim pesan atau unggah file dokumen (PDF, Word, Excel, Gambar) untuk mulai mencatat data kelas.', 
+      text: 'Halo Bapak/Ibu Guru SMPN 21 Kota Jambi! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Silakan kirim pesan atau unggah file dokumen (PDF, Excel, Gambar) untuk mulai mencatat data kelas.', 
       timestamp: new Date() 
     }
   ]);
@@ -45,6 +45,8 @@ const App: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+
+  const schoolLogoUrl = "https://raw.githubusercontent.com/ai-gen-images/school-logos/main/smpn21jambi.png";
 
   useEffect(() => {
     localStorage.setItem('gurumate_state', JSON.stringify(state));
@@ -85,6 +87,7 @@ const App: React.FC = () => {
     if(confirm('Keluar dari akun?')) {
       setState(INITIAL_STATE);
       localStorage.removeItem('gurumate_state');
+      window.location.reload(); // Refresh untuk memastikan cache dibersihkan
     }
   };
 
@@ -160,7 +163,6 @@ const App: React.FC = () => {
           if (fc.name === 'addGrade') setState(p => ({ ...p, grades: [...p.grades, { id: Date.now().toString(), ...args }] }));
           if (fc.name === 'addActivity') setState(p => ({ ...p, activities: [...p.activities, { id: Date.now().toString(), ...args }] }));
           if (fc.name === 'addReminder') {
-            // Simulasi sinkronisasi otomatis dengan Google
             setState(p => ({ 
               ...p, 
               reminders: [...p.reminders, { id: Date.now().toString(), ...args, googleSynced: true }] 
@@ -199,23 +201,19 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-black transition-colors">
-      {/* Dynamic Header */}
       <header className="shrink-0 px-5 h-16 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
         <div className="flex items-center gap-3">
-          <img src={state.user.photo} className="w-8 h-8 rounded-full border-2 border-indigo-600" alt="Avatar" onClick={handleLogout} />
+          <img src={schoolLogoUrl} className="w-8 h-8 object-contain" alt="Logo SMPN 21" />
           <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">GuruMate</h1>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500">
             <span className="material-symbols-rounded">{darkMode ? 'light_mode' : 'dark_mode'}</span>
           </button>
-          <button onClick={() => setShowHelp(true)} className="p-2 text-gray-500">
-            <span className="material-symbols-rounded">help</span>
-          </button>
+          <img src={state.user.photo} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" alt="Avatar" onClick={handleLogout} />
         </div>
       </header>
 
-      {/* Main Container */}
       <main className="flex-1 overflow-hidden relative">
         <div className="h-full overflow-y-auto scroll-hide">
           <div className="max-w-3xl mx-auto px-4 py-6 pb-40">
@@ -258,7 +256,6 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        {/* Input Dock */}
         {view === 'chat' && (
           <div className="absolute bottom-4 left-0 right-0 px-4 z-40">
             <div className="max-w-2xl mx-auto bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-gray-200 dark:border-gray-800 p-2 rounded-3xl shadow-2xl">
@@ -349,7 +346,6 @@ const App: React.FC = () => {
         ))}
       </nav>
 
-      {/* Help Modal */}
       {showHelp && (
         <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4" onClick={() => setShowHelp(false)}>
           <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
@@ -359,11 +355,11 @@ const App: React.FC = () => {
             <div className="space-y-4">
               <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                 <span className="material-symbols-rounded text-indigo-600">sync</span>
-                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Semua pengingat yang dibuat otomatis tersinkron ke akun Google Anda.</p>
+                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Semua pengingat disinkronkan ke Google Tasks SMPN 21.</p>
               </div>
               <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
                 <span className="material-symbols-rounded text-indigo-600">upload_file</span>
-                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Unggah laporan PDF atau foto tabel nilai untuk pengolahan data instan.</p>
+                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Unggah PDF nilai atau foto tabel untuk input data otomatis.</p>
               </div>
             </div>
             <button onClick={() => setShowHelp(false)} className="w-full mt-8 bg-indigo-600 text-white py-4 rounded-2xl font-black">Lanjutkan</button>

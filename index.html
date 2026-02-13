@@ -4,7 +4,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>GuruMate - Smart Teacher Assistant</title>
+    <title>GuruMate - SMPN 21 Kota Jambi</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ai-gen-images/school-logos/main/smpn21jambi.png" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -52,21 +53,19 @@
       }
       body {
         padding-top: var(--sat);
-        height: 100dvh; /* Dynamic Viewport Height */
+        height: 100dvh;
         overflow: hidden;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
-        overscroll-behavior-y: none; /* Prevent pull-to-refresh */
+        overscroll-behavior-y: none;
       }
       .scroll-hide::-webkit-scrollbar { display: none; }
       
-      /* Mobile Optimizations */
       @media (max-width: 640px) {
         .prose-custom p { font-size: 15px; }
         .prose-custom table { font-size: 12px; }
       }
 
-      /* Custom Layout Classes */
       .app-container {
         height: 100dvh;
         display: flex;

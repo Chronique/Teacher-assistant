@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'gurumate-v1';
+const CACHE_NAME = 'gurumate-v2'; // Versi dinaikkan ke v2
 const ASSETS = [
   './',
   './index.html',
@@ -8,6 +8,8 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
+  // Paksa service worker baru untuk segera aktif
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS).catch(err => {
@@ -21,7 +23,6 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((response) => {
       return response || fetch(event.request).catch(() => {
-        // Fallback jika offline dan aset tidak ada di cache
         return new Response('Offline content unavailable');
       });
     })
@@ -34,6 +35,9 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
       );
+    }).then(() => {
+      // Ambil alih kontrol semua tab yang terbuka segera
+      return self.clients.claim();
     })
   );
 });
