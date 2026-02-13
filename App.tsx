@@ -9,6 +9,9 @@ import { StatsCard } from './components/StatsCard';
 import { ContactView } from './components/ContactView';
 import { Login } from './components/Login';
 
+// Menggunakan URL Raw dari GitHub agar gambar bisa dimuat langsung
+const SCHOOL_LOGO_URL = "https://raw.githubusercontent.com/Chronique/SMPN21-JAMBI/main/public/icon.png";
+
 const INITIAL_STATE: AppState = {
   user: null,
   schedules: [],
@@ -56,28 +59,31 @@ const App: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const schoolLogoUrl = "/logo.png";
-
   useEffect(() => {
+    // Deteksi jika sudah dalam mode standalone (aplikasi terpasang)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
+    
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      // Cek apakah user sudah menginstal (standalone mode)
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
       if (!isStandalone) {
-        setTimeout(() => setShowInstallPopup(true), 3000);
+        // Tampilkan popup setelah 2 detik login
+        setTimeout(() => setShowInstallPopup(true), 2000);
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    
-    // Cek juga jika sudah diinstal tapi event tidak fired
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setShowInstallPopup(false);
+
+    // Fallback untuk perangkat yang tidak memicu event (seperti iOS) atau jika event telat
+    if (!isStandalone) {
+      const timer = setTimeout(() => {
+        if (!deferredPrompt) setShowInstallPopup(true);
+      }, 6000);
+      return () => clearTimeout(timer);
     }
 
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-  }, []);
+  }, [deferredPrompt]);
 
   useEffect(() => {
     if (state) {
@@ -113,15 +119,14 @@ const App: React.FC = () => {
   }, [messages, isLoading, view, state.user]);
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) {
-      alert("Aplikasi siap diinstal. Cari menu 'Tambahkan ke Layar Utama' di browser Anda.");
-      setShowInstallPopup(false);
-      return;
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response: ${outcome}`);
+      setDeferredPrompt(null);
+    } else {
+      alert("Cara Pasang Aplikasi:\n\n1. Tekan ikon 'Berbagi' (iOS) atau 'Titik Tiga' (Android) di browser.\n2. Pilih 'Tambahkan ke Layar Utama' atau 'Add to Home Screen'.");
     }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    console.log(`User response to install prompt: ${outcome}`);
-    setDeferredPrompt(null);
     setShowInstallPopup(false);
   };
 
@@ -244,7 +249,7 @@ const App: React.FC = () => {
           <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-50 dark:bg-gray-800 rounded-xl flex items-center justify-center p-1.5 overflow-hidden">
-                <img src={schoolLogoUrl} className="w-full h-full object-contain" alt="Logo" />
+                <img src={SCHOOL_LOGO_URL} className="w-full h-full object-contain" alt="Logo" />
               </div>
               <div>
                 <p className="text-xs font-black dark:text-white uppercase tracking-tighter">Pasang GuruMate</p>
@@ -253,7 +258,7 @@ const App: React.FC = () => {
             </div>
             <div className="flex gap-2">
               <button onClick={() => setShowInstallPopup(false)} className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-tighter">Nanti</button>
-              <button onClick={handleInstallApp} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100">PASANG</button>
+              <button onClick={handleInstallApp} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100 uppercase tracking-widest">Pasang</button>
             </div>
           </div>
         </div>
@@ -263,13 +268,9 @@ const App: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
              <img 
-                src={schoolLogoUrl} 
+                src={SCHOOL_LOGO_URL} 
                 className="w-full h-full object-contain" 
                 alt="Logo" 
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  if (!target.src.includes('?v=')) target.src = schoolLogoUrl + "?v=" + Date.now();
-                }}
               />
           </div>
           <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">GuruMate</h1>

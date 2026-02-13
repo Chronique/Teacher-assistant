@@ -1,26 +1,18 @@
 
-const CACHE_NAME = 'gurumate-v5';
+const CACHE_NAME = 'gurumate-v6'; // Menaikkan versi untuk paksa update
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0'
-];
-
-const OPTIONAL_ASSETS = [
-  './logo.png'
+  'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0',
+  'https://raw.githubusercontent.com/Chronique/SMPN21-JAMBI/main/public/icon.png'
 ];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      cache.addAll(ASSETS);
-      OPTIONAL_ASSETS.forEach(asset => {
-        fetch(asset).then(response => {
-          if(response.ok) cache.put(asset, response);
-        }).catch(() => console.log('Optional asset logo not found yet'));
-      });
+      return cache.addAll(ASSETS);
     })
   );
 });
