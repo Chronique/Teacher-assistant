@@ -95,12 +95,16 @@ const generateParentReportFn: FunctionDeclaration = {
 
 const syncContactsFn: FunctionDeclaration = {
   name: 'syncContacts',
-  description: 'Sinkronisasi data kontak orang tua dari daftar siswa.',
+  description: 'Menambahkan atau memperbarui kontak orang tua siswa.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      className: { type: Type.STRING, description: 'Nama kelas untuk disinkronkan' },
+      studentName: { type: Type.STRING, description: 'Nama siswa' },
+      parentName: { type: Type.STRING, description: 'Nama orang tua' },
+      phoneNumber: { type: Type.STRING, description: 'Nomor WhatsApp' },
+      className: { type: Type.STRING, description: 'Kelas' },
     },
+    required: ['studentName', 'parentName', 'phoneNumber', 'className']
   },
 };
 
@@ -130,8 +134,12 @@ export const chatWithGemini = async (
         Tugas Anda membantu mengelola administrasi kelas.
         
         KEMAMPUAN KHUSUS:
-        1. Anda bisa menerima unggahan file (gambar tabel nilai, foto jadwal, atau dokumen tugas). 
-        2. Anda dapat mengelola daftar kontak orang tua siswa.
+        1. Anda dapat menerima unggahan file gambar (seperti foto catatan nilai) untuk dianalisis dan dimasukkan ke sistem.
+        2. Anda dapat membantu guru mencatat jadwal, nilai, kegiatan, dan kontak orang tua.
+        
+        PENTING:
+        - Saat ini data aplikasi masih KOSONG. Bantu bapak/ibu guru untuk mengisi datanya.
+        - Jika guru meminta kirim laporan tapi nomor WhatsApp tidak ada di daftar kontak, tanyakan nomornya atau mintalah untuk menambah kontak terlebih dahulu.
         
         FITUR UTAMA:
         - Jadwal Pelajaran (Tambah & Cek)
@@ -140,17 +148,6 @@ export const chatWithGemini = async (
         - Pengingat/Reminder
         - Laporan WhatsApp untuk Orang Tua
         - Manajemen Kontak Orang Tua
-        
-        SLASH COMMANDS:
-        - /list: Menampilkan daftar kemampuan.
-        - /jadwal: Ringkasan jadwal.
-        - /nilai: Ringkasan nilai.
-        - /kontak: Buka tab kontak orang tua.
-        
-        Data saat ini:
-        ${JSON.stringify(currentState)}
-        
-        Jika user menanyakan nomor WhatsApp, gunakan data dari 'contacts' jika ada. Jika tidak ada, gunakan default: 6285368452424.
         
         Berikan jawaban yang ramah, profesional, dan gunakan bahasa Indonesia yang baik.`,
         tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addActivityFn, addReminderFn, generateParentReportFn, syncContactsFn] }],

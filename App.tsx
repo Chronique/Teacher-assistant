@@ -9,24 +9,12 @@ import { StatsCard } from './components/StatsCard';
 import { ContactView } from './components/ContactView';
 
 const INITIAL_STATE: AppState = {
-  schedules: [
-    { id: '1', day: 'Senin', subject: 'Matematika', time: '08:00 - 09:30', className: '9A' },
-    { id: '2', day: 'Senin', subject: 'Fisika', time: '10:00 - 11:30', className: '9B' },
-  ],
-  grades: [
-    { id: '1', studentName: 'Budi Santoso', subject: 'Matematika', score: 85 },
-    { id: '2', studentName: 'Ani Wijaya', subject: 'Matematika', score: 72 },
-  ],
-  activities: [
-    { id: '1', studentName: 'Budi Santoso', description: 'Aktif bertanya di kelas.', category: 'Akademik', date: '2023-10-25' },
-  ],
-  reminders: [
-    { id: '1', text: 'Kumpulkan nilai UTS 9A', date: 'Besok, 09:00', priority: 'Tinggi' },
-  ],
+  schedules: [],
+  grades: [],
+  activities: [],
+  reminders: [],
   parentReports: [],
-  contacts: [
-    { id: 'c1', studentName: 'Budi Santoso', parentName: 'Bpk. Santoso', phoneNumber: '6285368452424', className: '9A' },
-  ]
+  contacts: []
 };
 
 const App: React.FC = () => {
@@ -38,7 +26,7 @@ const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: 'model', text: 'Selamat datang di **GuruMate**! 🏫\n\nSaya asisten pintar Anda. Berikut yang bisa saya bantu:\n- 📅 Kelola **Jadwal Pelajaran**\n- 📝 Input **Nilai Siswa**\n- ✍️ Catat **Kegiatan Siswa**\n- 🔔 Atur **Pengingat**\n\nKlik ikon mikrofon untuk perintah suara.', timestamp: new Date() }
+    { role: 'model', text: 'Halo Bapak/Ibu Guru! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Data Anda saat ini masih kosong.\n\nSilakan instruksikan saya untuk:\n- 📅 Menambahkan **Jadwal Pelajaran**\n- 📝 Memasukkan **Nilai Siswa**\n- ✍️ Mencatat **Kegiatan/Perilaku Siswa**\n- 🔔 Membuat **Pengingat**\n\nApa yang ingin Anda lakukan pertama kali?', timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -112,11 +100,12 @@ const App: React.FC = () => {
   };
 
   const handleSyncContacts = () => {
-    const newContacts: StudentContact[] = [
-      ...state.contacts,
-      { id: Date.now().toString(), studentName: 'Rina Kurnia', parentName: 'Ibu Kurnia', phoneNumber: '62812345678', className: '9B' }
-    ];
-    setState(prev => ({ ...prev, contacts: newContacts }));
+    // Fungsi sinkronisasi kontak sekarang hanya memberi tahu user untuk menambahkan via chat
+    setMessages(prev => [...prev, { 
+      role: 'model', 
+      text: 'Fitur Sinkronisasi Kontak: Silakan ucapkan atau ketik "Tambahkan kontak [Nama] nomor [HP]" untuk mengisi daftar kontak Anda.', 
+      timestamp: new Date() 
+    }]);
   };
 
   const handleSendMessage = async (e?: React.FormEvent) => {
@@ -129,7 +118,14 @@ const App: React.FC = () => {
 
     const cmd = input.trim().toLowerCase();
     if (cmd === '/list') { setShowHelp(true); setInput(''); return; }
-    if (cmd === '/reset') { setMessages([{ role: 'model', text: 'Chat diatur ulang.', timestamp: new Date() }]); setInput(''); return; }
+    if (cmd === '/reset') { 
+      if(confirm('Hapus semua data dan mulai ulang chat?')) {
+        setState(INITIAL_STATE);
+        setMessages([{ role: 'model', text: 'Aplikasi telah diatur ulang ke kondisi awal.', timestamp: new Date() }]);
+      }
+      setInput(''); 
+      return; 
+    }
 
     const userMsg: ChatMessage = { role: 'user', text: input || `File: ${selectedFile?.name}`, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
