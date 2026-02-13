@@ -1,0 +1,7 @@
+{
+  "name": "GuruMate - Smart Teacher Assistant",
+  "description": "Asisten chatbot AI pintar untuk guru dalam mengelola jadwal, nilai, dan rangkuman kegiatan siswa dengan antarmuka yang modern dan responsif.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
