@@ -22,10 +22,36 @@ export interface StudentActivity {
   category: 'Akademik' | 'Perilaku' | 'Ekstrakurikuler';
 }
 
+export interface Reminder {
+  id: string;
+  text: string;
+  date: string;
+  priority: 'Rendah' | 'Sedang' | 'Tinggi';
+}
+
+export interface ParentReport {
+  id: string;
+  studentName: string;
+  phoneNumber: string;
+  content: string;
+  date: string;
+}
+
+export interface StudentContact {
+  id: string;
+  studentName: string;
+  parentName: string;
+  phoneNumber: string;
+  className: string;
+}
+
 export interface AppState {
   schedules: Schedule[];
   grades: StudentGrade[];
   activities: StudentActivity[];
+  reminders: Reminder[];
+  parentReports: ParentReport[];
+  contacts: StudentContact[];
 }
 
 export type MessageRole = 'user' | 'model' | 'system';

@@ -52,29 +52,95 @@ const addActivityFn: FunctionDeclaration = {
   },
 };
 
+const addReminderFn: FunctionDeclaration = {
+  name: 'addReminder',
+  description: 'Menambahkan pengingat untuk tugas atau kegiatan guru.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      text: { type: Type.STRING, description: 'Isi pengingat' },
+      date: { type: Type.STRING, description: 'Tanggal atau waktu pengingat' },
+      priority: { 
+        type: Type.STRING, 
+        description: 'Tingkat kepentingan',
+        enum: ['Rendah', 'Sedang', 'Tinggi']
+      },
+    },
+    required: ['text', 'date', 'priority'],
+  },
+};
+
+const generateParentReportFn: FunctionDeclaration = {
+  name: 'generateParentReport',
+  description: 'Membuat draf laporan perkembangan siswa untuk dikirim ke orang tua via WhatsApp.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      studentName: { type: Type.STRING, description: 'Nama siswa' },
+      phoneNumber: { type: Type.STRING, description: 'Nomor WhatsApp orang tua' },
+      content: { type: Type.STRING, description: 'Isi pesan WhatsApp yang lengkap dan sopan' },
+    },
+    required: ['studentName', 'phoneNumber', 'content'],
+  },
+};
+
+const syncContactsFn: FunctionDeclaration = {
+  name: 'syncContacts',
+  description: 'Sinkronisasi data kontak orang tua dari daftar siswa.',
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      className: { type: Type.STRING, description: 'Nama kelas untuk disinkronkan' },
+    },
+  },
+};
+
 export const chatWithGemini = async (
   prompt: string, 
   currentState: AppState,
-  history: { role: string; parts: { text: string }[] }[] = []
+  history: { role: string; parts: any[] }[] = [],
+  fileData?: { mimeType: string; data: string }
 ) => {
   try {
+    const userParts: any[] = [{ text: prompt }];
+    if (fileData) {
+      userParts.push({
+        inlineData: fileData
+      });
+    }
+
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: [...history, { role: 'user', parts: [{ text: prompt }] }],
+      contents: [...history, { role: 'user', parts: userParts }],
       config: {
-        systemInstruction: `Anda adalah GuruMate, asisten pribadi untuk guru di Indonesia. 
-        Tugas Anda membantu mengelola:
-        1. Jadwal Pelajaran
-        2. Nilai Siswa
-        3. Rangkuman Kegiatan Siswa
+        systemInstruction: `Anda adalah GuruMate, asisten pribadi multimodal untuk guru di Indonesia. 
+        Tugas Anda membantu mengelola administrasi kelas.
+        
+        KEMAMPUAN KHUSUS:
+        1. Anda bisa menerima unggahan file (gambar tabel nilai, foto jadwal, atau dokumen tugas). 
+        2. Anda dapat mengelola daftar kontak orang tua siswa.
+        
+        FITUR UTAMA:
+        - Jadwal Pelajaran (Tambah & Cek)
+        - Nilai Siswa (Input & Rekap)
+        - Rangkuman Kegiatan Siswa
+        - Pengingat/Reminder
+        - Laporan WhatsApp untuk Orang Tua
+        - Manajemen Kontak Orang Tua
+        
+        SLASH COMMANDS:
+        - /list: Menampilkan daftar kemampuan.
+        - /jadwal: Ringkasan jadwal.
+        - /nilai: Ringkasan nilai.
+        - /kontak: Buka tab kontak orang tua.
         
         Data saat ini:
         ${JSON.stringify(currentState)}
         
-        Berikan jawaban yang ramah, profesional, dan gunakan bahasa Indonesia yang baik. 
-        Jika guru ingin menambah data, gunakan function calling yang tersedia.
-        Jika ditanya tentang data yang ada, ringkaslah dengan baik dalam format markdown.`,
-        tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addActivityFn] }],
+        Jika user menanyakan nomor WhatsApp, gunakan data dari 'contacts' jika ada. Jika tidak ada, gunakan default: 6285368452424.
+        
+        Berikan jawaban yang ramah, profesional, dan gunakan bahasa Indonesia yang baik.`,
+        tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addActivityFn, addReminderFn, generateParentReportFn, syncContactsFn] }],
       },
     });
 
