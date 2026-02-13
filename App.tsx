@@ -22,8 +22,17 @@ const INITIAL_STATE: AppState = {
 
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
-    const saved = localStorage.getItem('gurumate_state');
-    return saved ? JSON.parse(saved) : INITIAL_STATE;
+    try {
+      const saved = localStorage.getItem('gurumate_state');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Penting: Gabungkan INITIAL_STATE dengan data yang tersimpan agar properti baru (seperti contacts) selalu ada
+        return { ...INITIAL_STATE, ...parsed };
+      }
+    } catch (e) {
+      console.error("Gagal memuat state:", e);
+    }
+    return INITIAL_STATE;
   });
   
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
@@ -61,7 +70,9 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('gurumate_state', JSON.stringify(state));
+    if (state) {
+      localStorage.setItem('gurumate_state', JSON.stringify(state));
+    }
   }, [state]);
 
   useEffect(() => {
@@ -95,7 +106,6 @@ const App: React.FC = () => {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    console.log('User choice:', outcome);
     setDeferredPrompt(null);
     setShowInstallPopup(false);
   };
@@ -106,7 +116,6 @@ const App: React.FC = () => {
 
   const handleLogout = () => {
     if(confirm('Keluar dari akun?')) {
-      setState(INITIAL_STATE);
       localStorage.removeItem('gurumate_state');
       window.location.reload(); 
     }
@@ -180,34 +189,35 @@ const App: React.FC = () => {
       if (response.functionCalls) {
         for (const fc of response.functionCalls) {
           const args = fc.args as any;
-          if (fc.name === 'addSchedule') setState(p => ({ ...p, schedules: [...p.schedules, { id: Date.now().toString(), ...args }] }));
-          if (fc.name === 'addGrade') setState(p => ({ ...p, grades: [...p.grades, { id: Date.now().toString(), ...args }] }));
-          if (fc.name === 'addBehaviorRecord') setState(p => ({ ...p, behaviorRecords: [...p.behaviorRecords, { id: Date.now().toString(), ...args }] }));
+          if (fc.name === 'addSchedule') setState(p => ({ ...p, schedules: [...(p.schedules || []), { id: Date.now().toString(), ...args }] }));
+          if (fc.name === 'addGrade') setState(p => ({ ...p, grades: [...(p.grades || []), { id: Date.now().toString(), ...args }] }));
+          if (fc.name === 'addBehaviorRecord') setState(p => ({ ...p, behaviorRecords: [...(p.behaviorRecords || []), { id: Date.now().toString(), ...args }] }));
           if (fc.name === 'addReminder') {
             setState(p => ({ 
               ...p, 
-              reminders: [...p.reminders, { id: Date.now().toString(), ...args, googleSynced: true }] 
+              reminders: [...(p.reminders || []), { id: Date.now().toString(), ...args, googleSynced: true }] 
             }));
             botText += "\n\n✅ *Berhasil disinkronkan dengan Google Reminder Anda.*";
           }
           if (fc.name === 'syncContacts') {
             setState(p => {
-               const exists = p.contacts.some(c => c.phoneNumber === args.phoneNumber);
+               const contacts = p.contacts || [];
+               const exists = contacts.some(c => c.phoneNumber === args.phoneNumber);
                if (exists) return p;
-               return { ...p, contacts: [...p.contacts, { id: Date.now().toString(), ...args }] };
+               return { ...p, contacts: [...contacts, { id: Date.now().toString(), ...args }] };
             });
           }
         }
       }
       setMessages(prev => [...prev, { role: 'model', text: botText, timestamp: new Date() }]);
     } catch (err: any) {
-      setMessages(prev => [...prev, { role: 'model', text: `❌ Gagal memproses data.`, timestamp: new Date() }]);
+      setMessages(prev => [...prev, { role: 'model', text: `❌ Gagal memproses data. Silakan coba lagi.`, timestamp: new Date() }]);
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (!state.user) {
+  if (!state || !state.user) {
     return <Login onLogin={handleLogin} />;
   }
 
@@ -260,9 +270,9 @@ const App: React.FC = () => {
             {view === 'chat' && (
               <div className="space-y-5 animate-fade-in">
                 <div className="flex gap-3 overflow-x-auto pb-2 scroll-hide">
-                  <div className="shrink-0"><StatsCard title="Jadwal" value={state.schedules.length} icon="event_note" color="border-indigo-500" /></div>
-                  <div className="shrink-0"><StatsCard title="Sikap" value={state.behaviorRecords.length} icon="visibility" color="border-amber-500" /></div>
-                  <div className="shrink-0"><StatsCard title="Kontak" value={state.contacts.length} icon="group" color="border-emerald-500" /></div>
+                  <div className="shrink-0"><StatsCard title="Jadwal" value={(state.schedules || []).length} icon="event_note" color="border-indigo-500" /></div>
+                  <div className="shrink-0"><StatsCard title="Sikap" value={(state.behaviorRecords || []).length} icon="visibility" color="border-amber-500" /></div>
+                  <div className="shrink-0"><StatsCard title="Kontak" value={(state.contacts || []).length} icon="group" color="border-emerald-500" /></div>
                 </div>
 
                 {messages.map((m, i) => (
@@ -284,7 +294,7 @@ const App: React.FC = () => {
               </div>
             )}
             {view === 'dashboard' && <DataView state={state} />}
-            {view === 'contacts' && <ContactView contacts={state.contacts} onAddContact={(c) => setState(p => ({ ...p, contacts: [...p.contacts, c] }))} />}
+            {view === 'contacts' && <ContactView contacts={state.contacts || []} onAddContact={(c) => setState(p => ({ ...p, contacts: [...(p.contacts || []), c] }))} />}
           </div>
         </div>
 

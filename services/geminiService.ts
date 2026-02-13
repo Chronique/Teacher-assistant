@@ -1,16 +1,9 @@
 
-import { GoogleGenAI, Type, FunctionDeclaration, GenerateContentResponse } from "@google/genai";
+import { GoogleGenAI, Type, FunctionDeclaration } from "@google/genai";
 import { AppState } from "../types";
 
-const getApiKey = () => {
-  if (typeof window !== 'undefined' && (window as any).process?.env?.API_KEY) {
-    return (window as any).process.env.API_KEY;
-  }
-  return process.env.API_KEY || "";
-};
-
-const apiKey = getApiKey();
-const ai = new GoogleGenAI({ apiKey });
+// Langsung gunakan process.env.API_KEY sesuai panduan
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const addScheduleFn: FunctionDeclaration = {
   name: 'addSchedule',
@@ -91,8 +84,6 @@ export const chatWithGemini = async (
   history: { role: string; parts: any[] }[] = [],
   fileData?: { mimeType: string; data: string }
 ) => {
-  if (!apiKey) throw new Error("API Key Missing");
-  
   try {
     const userParts: any[] = [{ text: prompt }];
     if (fileData) userParts.push({ inlineData: fileData });
@@ -116,7 +107,7 @@ export const chatWithGemini = async (
 
     return response;
   } catch (error) {
-    console.error(error);
+    console.error("Gemini Error:", error);
     throw error;
   }
 };
