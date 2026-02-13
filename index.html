@@ -5,7 +5,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>GuruMate - SMPN 21 Kota Jambi</title>
-    <!-- Favicon merujuk ke file lokal logo.png -->
     <link rel="icon" type="image/png" href="./logo.png" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4f46e5" />
@@ -61,25 +60,12 @@
         overscroll-behavior-y: none;
       }
       .scroll-hide::-webkit-scrollbar { display: none; }
-      
-      @media (max-width: 640px) {
-        .prose-custom p { font-size: 15px; }
-        .prose-custom table { font-size: 12px; }
-      }
-
-      .app-container {
-        height: 100dvh;
-        display: flex;
-        flex-direction: column;
-      }
-      .safe-bottom {
-        padding-bottom: calc(var(--sab) + 0.5rem);
-      }
+      .app-container { height: 100dvh; display: flex; flex-direction: column; }
+      .safe-bottom { padding-bottom: calc(var(--sab) + 0.5rem); }
     </style>
   </head>
   <body class="bg-gray-50 dark:bg-black text-gray-900 transition-colors duration-300">
     <div id="root" class="app-container"></div>
-    <!-- Perbaikan: Menghapus query string ?v=1.1 agar build Vite tidak error -->
     <script type="module" src="index.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {
