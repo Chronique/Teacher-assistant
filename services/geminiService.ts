@@ -51,12 +51,12 @@ const addBehaviorRecordFn: FunctionDeclaration = {
 
 const addReminderFn: FunctionDeclaration = {
   name: 'addReminder',
-  description: 'Menambahkan pengingat ke Google Tasks.',
+  description: 'Menambahkan pengingat yang akan disinkronkan ke Google Calendar dan Google Tasks.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      text: { type: Type.STRING },
-      date: { type: Type.STRING },
+      text: { type: Type.STRING, description: 'Isi pengingat atau kegiatan' },
+      date: { type: Type.STRING, description: 'Tanggal dan waktu (ISO atau format deskriptif)' },
       priority: { type: Type.STRING, enum: ['Rendah', 'Sedang', 'Tinggi'] },
     },
     required: ['text', 'date', 'priority'],
@@ -65,7 +65,7 @@ const addReminderFn: FunctionDeclaration = {
 
 const syncContactsFn: FunctionDeclaration = {
   name: 'syncContacts',
-  description: 'Menyimpan kontak orang tua.',
+  description: 'Menyimpan kontak orang tua siswa ke buku telepon digital.',
   parameters: {
     type: Type.OBJECT,
     properties: {
@@ -92,15 +92,17 @@ export const chatWithGemini = async (
       model: 'gemini-3-flash-preview',
       contents: [...history, { role: 'user', parts: userParts }],
       config: {
-        systemInstruction: `Anda adalah GuruMate AI untuk SMPN 21 Kota Jambi.
+        systemInstruction: `Anda adalah GuruMate AI, asisten administrasi digital untuk Guru SMPN 21 Kota Jambi.
         
-        TUGAS UTAMA:
-        - Membantu guru mengelola Jadwal, Nilai Akademik, dan Nilai Kelakuan (Sikap).
-        - Jika user mengunggah gambar/file berisi daftar nilai atau catatan perilaku, ekstrak datanya menggunakan function call 'addGrade' atau 'addBehaviorRecord'.
-        - Predikat Nilai Kelakuan: A (Sangat Baik), B (Baik), C (Cukup), D (Kurang).
-        - Setiap pengingat disinkronkan ke Google Tasks.
+        KEMAMPUAN UTAMA:
+        1. ANALISIS DOKUMEN: Anda bisa membaca file PDF, Excel, Docx, atau Foto Tabel Nilai. Jika user mengunggah file tersebut, ekstrak nama siswa, nilai, atau catatan perilaku dan gunakan fungsi 'addGrade' atau 'addBehaviorRecord' untuk setiap baris data yang ditemukan.
+        2. GOOGLE SYNC: Setiap kali user meminta diingatkan (misal: "Ingatkan saya besok jam 8 ada rapat"), gunakan fungsi 'addReminder'. Beritahu user bahwa ini otomatis tersinkron dengan Google Calendar & Google Tasks mereka.
+        3. LAPORAN WHATSAPP: Anda membantu merangkum perkembangan siswa untuk dikirim ke orang tua.
+        4. KONTAK: Anda bisa menyimpan data kontak orang tua.
         
-        Berikan jawaban dalam Bahasa Indonesia yang ramah dan efisien.`,
+        GAYA BAHASA: Sopan, profesional, dan sangat membantu. Gunakan format Markdown (tebal, list) agar mudah dibaca.
+        
+        Jika user memberikan instruksi suara/teks seperti "Besok jam 9 pagi ada tugas untuk kelas 9A", Anda harus langsung memanggil 'addReminder' dengan parameter yang tepat.`,
         tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addBehaviorRecordFn, addReminderFn, syncContactsFn] }],
       },
     });

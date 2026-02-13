@@ -42,7 +42,16 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { 
       role: 'model', 
-      text: 'Halo Bapak/Ibu Guru SMPN 21 Kota Jambi! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Silakan kirim pesan atau unggah file dokumen (PDF, Excel, Gambar) untuk mulai mencatat data kelas atau nilai kelakuan siswa.', 
+      text: `Selamat datang di **GuruMate SMPN 21 Jambi**! 🏫✨
+
+Saya asisten AI Anda yang terintegrasi dengan Google. Berikut yang bisa saya bantu:
+
+🔹 **Kelola Nilai & Sikap**: Unggah file (PDF, Excel, Docx, atau Foto) berisi daftar nilai/catatan perilaku siswa. Saya akan merekapnya secara otomatis.
+🔹 **Jadwal Mengajar**: Ketik atau ucapkan jadwal Anda untuk disimpan di dashboard.
+🔹 **Google Sync (Reminder/Kalender)**: Ucapkan *"Ingatkan saya besok jam 10 pagi ada ujian kelas 9A"*. Ini akan otomatis masuk ke **Google Calendar & Tasks** Anda.
+🔹 **Kontak Ortu**: Simpan dan hubungi orang tua siswa via WhatsApp dengan satu klik.
+
+Ada yang bisa saya bantu sekarang?`, 
       timestamp: new Date() 
     }
   ]);
@@ -153,6 +162,8 @@ const App: React.FC = () => {
           const transcript = event.results[0][0].transcript;
           setInput(transcript);
           setIsListening(false);
+          // Auto send after voice recognition for better experience
+          setTimeout(() => handleSendMessage(), 500);
         };
         recognitionRef.current.onend = () => setIsListening(false);
       }
@@ -217,7 +228,7 @@ const App: React.FC = () => {
               ...p, 
               reminders: [...(p.reminders || []), { id: Date.now().toString(), ...args, googleSynced: true }] 
             }));
-            botText += "\n\n✅ *Berhasil disinkronkan dengan Google Reminder Anda.*";
+            botText += `\n\n✅ **Pengingat Tersimpan!**\nKegiatan: *${args.text}*\nWaktu: *${args.date}*\n\n*Catatan: Sinkronisasi otomatis dengan Google Calendar & Tasks berhasil.*`;
           }
           if (fc.name === 'syncContacts') {
             setState(p => {
