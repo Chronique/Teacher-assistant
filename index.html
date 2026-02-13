@@ -79,7 +79,16 @@
   </head>
   <body class="bg-gray-50 dark:bg-black text-gray-900 transition-colors duration-300">
     <div id="root" class="app-container"></div>
-    <!-- Cache busting v=1.1 untuk memaksa browser memuat ulang di Vercel -->
-    <script type="module" src="index.tsx?v=1.1"></script>
+    <!-- Perbaikan: Menghapus query string ?v=1.1 agar build Vite tidak error -->
+    <script type="module" src="index.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(err => {
+            console.log('SW registration failed: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>
