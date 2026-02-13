@@ -1,9 +1,9 @@
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="h-full">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>GuruMate - Smart Teacher Assistant</title>
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4f46e5" />
@@ -13,20 +13,18 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Shim process.env untuk mencegah error di browser murni
       window.process = window.process || { env: {} };
-      
       tailwind.config = {
         darkMode: 'class',
         theme: {
           extend: {
             animation: {
-              'fade-in': 'fadeIn 0.3s ease-out',
-              'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+              'fade-in': 'fadeIn 0.2s ease-out',
+              'slide-up': 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
             },
             keyframes: {
               fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
-              slideUp: { '0%': { transform: 'translateY(10px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+              slideUp: { '0%': { transform: 'translateY(12px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
             }
           }
         }
@@ -45,70 +43,42 @@
 }
 </script>
     <style>
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sab: env(safe-area-inset-bottom);
+      }
       .material-symbols-rounded {
         font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        display: inline-block;
-        line-height: 1;
-        text-transform: none;
-        letter-spacing: normal;
-        word-wrap: normal;
-        white-space: nowrap;
-        direction: ltr;
       }
       body {
-        padding-top: env(safe-area-inset-top);
-        padding-bottom: env(safe-area-inset-bottom);
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
+        padding-top: var(--sat);
+        height: 100dvh; /* Dynamic Viewport Height */
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh */
       }
-      .scroll-hide::-webkit-scrollbar {
-        display: none;
-      }
-      .dark body {
-        background-color: #030712;
-      }
-      /* Smooth transitions for theme switching */
-      * {
-        transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+      .scroll-hide::-webkit-scrollbar { display: none; }
+      
+      /* Mobile Optimizations */
+      @media (max-width: 640px) {
+        .prose-custom p { font-size: 15px; }
+        .prose-custom table { font-size: 12px; }
       }
 
-      /* Markdown Styles */
-      .prose-custom h1 { @apply text-xl font-black mb-2; }
-      .prose-custom h2 { @apply text-lg font-bold mb-2; }
-      .prose-custom h3 { @apply text-base font-bold mb-1; }
-      .prose-custom p { @apply mb-3 last:mb-0 leading-relaxed; }
-      .prose-custom ul { @apply list-disc list-inside mb-3 space-y-1; }
-      .prose-custom ol { @apply list-decimal list-inside mb-3 space-y-1; }
-      .prose-custom table { @apply w-full border-collapse mb-3 text-xs overflow-hidden rounded-lg; }
-      .prose-custom th { @apply bg-gray-100 dark:bg-gray-800 p-2 text-left font-bold border border-gray-200 dark:border-gray-700; }
-      .prose-custom td { @apply p-2 border border-gray-200 dark:border-gray-700; }
-      .prose-custom blockquote { @apply border-l-4 border-indigo-500 pl-3 italic text-gray-600 dark:text-gray-400 mb-3; }
-      
-      /* Syntax Highlighting */
-      .prose-custom pre {
-        @apply bg-gray-900 text-gray-100 p-4 rounded-xl mb-3 overflow-x-auto font-mono text-xs leading-normal;
+      /* Custom Layout Classes */
+      .app-container {
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
       }
-      .prose-custom code {
-        @apply font-mono px-1 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 font-semibold text-[0.85em];
-      }
-      .prose-custom pre code {
-        @apply bg-transparent p-0 text-inherit font-normal;
+      .safe-bottom {
+        padding-bottom: calc(var(--sab) + 0.5rem);
       }
     </style>
   </head>
-  <body class="bg-white text-gray-900 overflow-hidden">
-    <div id="root"></div>
-    <!-- Entry Point Module -->
+  <body class="bg-gray-50 dark:bg-black text-gray-900 transition-colors duration-300">
+    <div id="root" class="app-container"></div>
     <script type="module" src="index.tsx"></script>
-    <script>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          try {
-            navigator.serviceWorker.register('sw.js')
-              .catch(err => console.log('SW registration skipped in preview.'));
-          } catch (e) {}
-        });
-      }
-    </script>
   </body>
 </html>
