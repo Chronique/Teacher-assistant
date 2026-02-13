@@ -14,6 +14,14 @@ export interface StudentGrade {
   score: number;
 }
 
+export interface BehaviorRecord {
+  id: string;
+  studentName: string;
+  grade: 'A' | 'B' | 'C' | 'D';
+  description: string;
+  date: string;
+}
+
 export interface StudentActivity {
   id: string;
   studentName: string;
@@ -56,6 +64,7 @@ export interface AppState {
   user: UserProfile | null;
   schedules: Schedule[];
   grades: StudentGrade[];
+  behaviorRecords: BehaviorRecord[];
   activities: StudentActivity[];
   reminders: Reminder[];
   parentReports: ParentReport[];

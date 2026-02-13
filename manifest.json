@@ -1,21 +1,21 @@
 
 {
-  "name": "GuruMate Smart Assistant",
+  "name": "GuruMate SMPN 21 Jambi",
   "short_name": "GuruMate",
-  "description": "Asisten Pintar Guru untuk Kelola Kelas",
-  "start_url": ".",
+  "description": "Asisten Pintar Guru SMPN 21 Kota Jambi",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4f46e5",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2941/2941658.png",
+      "src": "./logo.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2941/2941658.png",
+      "src": "./logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

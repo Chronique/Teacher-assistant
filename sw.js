@@ -1,19 +1,19 @@
 
-const CACHE_NAME = 'gurumate-v2'; // Versi dinaikkan ke v2
+const CACHE_NAME = 'gurumate-v3'; // Naik ke v3
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './logo.png',
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0'
 ];
 
 self.addEventListener('install', (event) => {
-  // Paksa service worker baru untuk segera aktif
   self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS).catch(err => {
-        console.warn('Partial cache install failure, skipping some assets:', err);
+        console.warn('Partial cache install failure:', err);
       });
     })
   );
@@ -36,7 +36,6 @@ self.addEventListener('activate', (event) => {
         cacheNames.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))
       );
     }).then(() => {
-      // Ambil alih kontrol semua tab yang terbuka segera
       return self.clients.claim();
     })
   );

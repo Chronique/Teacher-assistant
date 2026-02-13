@@ -13,6 +13,7 @@ const INITIAL_STATE: AppState = {
   user: null,
   schedules: [],
   grades: [],
+  behaviorRecords: [],
   activities: [],
   reminders: [],
   parentReports: [],
@@ -30,7 +31,7 @@ const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { 
       role: 'model', 
-      text: 'Halo Bapak/Ibu Guru SMPN 21 Kota Jambi! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Silakan kirim pesan atau unggah file dokumen (PDF, Excel, Gambar) untuk mulai mencatat data kelas.', 
+      text: 'Halo Bapak/Ibu Guru SMPN 21 Kota Jambi! 🏫\n\nSaya **GuruMate**, asisten pintar Anda. Silakan kirim pesan atau unggah file dokumen (PDF, Excel, Gambar) untuk mulai mencatat data kelas atau nilai kelakuan siswa.', 
       timestamp: new Date() 
     }
   ]);
@@ -38,7 +39,9 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [view, setView] = useState<'chat' | 'dashboard' | 'contacts'>('chat');
-  const [showHelp, setShowHelp] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
+  const [headerLogoError, setHeaderLogoError] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -46,7 +49,16 @@ const App: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const schoolLogoUrl = "https://raw.githubusercontent.com/ai-gen-images/school-logos/main/smpn21jambi.png";
+  const schoolLogoUrl = "./logo.png";
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setTimeout(() => setShowInstallPopup(true), 5000);
+    });
+    return () => window.removeEventListener('beforeinstallprompt', () => {});
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('gurumate_state', JSON.stringify(state));
@@ -79,6 +91,15 @@ const App: React.FC = () => {
     }
   }, [messages, isLoading, view, state.user]);
 
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log('User choice:', outcome);
+    setDeferredPrompt(null);
+    setShowInstallPopup(false);
+  };
+
   const handleLogin = (user: UserProfile) => {
     setState(prev => ({ ...prev, user }));
   };
@@ -87,7 +108,7 @@ const App: React.FC = () => {
     if(confirm('Keluar dari akun?')) {
       setState(INITIAL_STATE);
       localStorage.removeItem('gurumate_state');
-      window.location.reload(); // Refresh untuk memastikan cache dibersihkan
+      window.location.reload(); 
     }
   };
 
@@ -161,7 +182,7 @@ const App: React.FC = () => {
           const args = fc.args as any;
           if (fc.name === 'addSchedule') setState(p => ({ ...p, schedules: [...p.schedules, { id: Date.now().toString(), ...args }] }));
           if (fc.name === 'addGrade') setState(p => ({ ...p, grades: [...p.grades, { id: Date.now().toString(), ...args }] }));
-          if (fc.name === 'addActivity') setState(p => ({ ...p, activities: [...p.activities, { id: Date.now().toString(), ...args }] }));
+          if (fc.name === 'addBehaviorRecord') setState(p => ({ ...p, behaviorRecords: [...p.behaviorRecords, { id: Date.now().toString(), ...args }] }));
           if (fc.name === 'addReminder') {
             setState(p => ({ 
               ...p, 
@@ -169,7 +190,6 @@ const App: React.FC = () => {
             }));
             botText += "\n\n✅ *Berhasil disinkronkan dengan Google Reminder Anda.*";
           }
-          if (fc.name === 'generateParentReport') setState(p => ({ ...p, parentReports: [...p.parentReports, { id: Date.now().toString(), ...args, date: new Date().toLocaleDateString() }] }));
           if (fc.name === 'syncContacts') {
             setState(p => {
                const exists = p.contacts.some(c => c.phoneNumber === args.phoneNumber);
@@ -187,30 +207,50 @@ const App: React.FC = () => {
     }
   };
 
-  const getFileIcon = (file: File) => {
-    if (file.type.startsWith('image/')) return 'image';
-    if (file.type.includes('pdf')) return 'picture_as_pdf';
-    if (file.type.includes('sheet') || file.type.includes('excel')) return 'table_view';
-    if (file.type.includes('word') || file.type.includes('document')) return 'description';
-    return 'insert_drive_file';
-  };
-
   if (!state.user) {
     return <Login onLogin={handleLogin} />;
   }
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-black transition-colors">
+      {/* Installation Popup */}
+      {showInstallPopup && (
+        <div className="fixed top-4 left-4 right-4 z-[100] animate-slide-up">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs">S21</div>
+              <div>
+                <p className="text-xs font-black dark:text-white">Instal GuruMate</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Akses cepat di layar utama</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => setShowInstallPopup(false)} className="px-3 py-2 text-[10px] font-black text-gray-400">TUTUP</button>
+              <button onClick={handleInstallApp} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100">PASANG</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <header className="shrink-0 px-5 h-16 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
         <div className="flex items-center gap-3">
-          <img src={schoolLogoUrl} className="w-8 h-8 object-contain" alt="Logo SMPN 21" />
+          <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+            {!headerLogoError ? (
+               <img 
+                src={schoolLogoUrl} 
+                className="w-full h-full object-contain" 
+                alt="Logo" 
+                onError={() => setHeaderLogoError(true)} 
+              />
+            ) : (
+              <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-black text-[10px]">S21</div>
+            )}
+          </div>
           <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">GuruMate</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500">
-            <span className="material-symbols-rounded">{darkMode ? 'light_mode' : 'dark_mode'}</span>
-          </button>
-          <img src={state.user.photo} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm" alt="Avatar" onClick={handleLogout} />
+          <button onClick={() => setDarkMode(!darkMode)} className="p-2 text-gray-500"><span className="material-symbols-rounded">{darkMode ? 'light_mode' : 'dark_mode'}</span></button>
+          <img src={state.user.photo} className="w-8 h-8 rounded-full border border-gray-100 shadow-sm cursor-pointer" alt="Avatar" onClick={handleLogout} />
         </div>
       </header>
 
@@ -221,23 +261,15 @@ const App: React.FC = () => {
               <div className="space-y-5 animate-fade-in">
                 <div className="flex gap-3 overflow-x-auto pb-2 scroll-hide">
                   <div className="shrink-0"><StatsCard title="Jadwal" value={state.schedules.length} icon="event_note" color="border-indigo-500" /></div>
-                  <div className="shrink-0"><StatsCard title="Reminders" value={state.reminders.length} icon="notifications_active" color="border-rose-500" /></div>
+                  <div className="shrink-0"><StatsCard title="Sikap" value={state.behaviorRecords.length} icon="visibility" color="border-amber-500" /></div>
                   <div className="shrink-0"><StatsCard title="Kontak" value={state.contacts.length} icon="group" color="border-emerald-500" /></div>
                 </div>
 
                 {messages.map((m, i) => (
                   <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} animate-slide-up`}>
-                    <div className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm text-[15px] leading-relaxed ${
-                      m.role === 'user' 
-                        ? 'bg-indigo-600 text-white rounded-tr-none' 
-                        : 'bg-white dark:bg-gray-900 dark:text-gray-200 border border-gray-100 dark:border-gray-800 rounded-tl-none'
-                    }`}>
-                      <div className="prose-custom">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown>
-                      </div>
-                      <p className={`text-[10px] mt-1.5 opacity-50 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                        {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                    <div className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm text-[15px] leading-relaxed ${m.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white dark:bg-gray-900 dark:text-gray-200 border border-gray-100 dark:border-gray-800 rounded-tl-none'}`}>
+                      <div className="prose-custom"><ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown></div>
+                      <p className={`text-[10px] mt-1.5 opacity-50 ${m.role === 'user' ? 'text-right' : 'text-left'}`}>{m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                     </div>
                   </div>
                 ))}
@@ -262,14 +294,8 @@ const App: React.FC = () => {
               {selectedFile && (
                 <div className="px-3 pb-3 flex items-center gap-3 border-b border-gray-50 dark:border-gray-800 mb-2">
                   <div className="relative w-12 h-12 bg-indigo-50 dark:bg-gray-800 rounded-xl flex items-center justify-center">
-                    {filePreview ? (
-                      <img src={filePreview} className="w-full h-full object-cover rounded-xl" />
-                    ) : (
-                      <span className="material-symbols-rounded text-indigo-600">{getFileIcon(selectedFile)}</span>
-                    )}
-                    <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] shadow-lg">
-                      <span className="material-symbols-rounded text-[14px]">close</span>
-                    </button>
+                    {filePreview ? <img src={filePreview} className="w-full h-full object-cover rounded-xl" /> : <span className="material-symbols-rounded text-indigo-600">insert_drive_file</span>}
+                    <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"><span className="material-symbols-rounded text-[14px]">close</span></button>
                   </div>
                   <div className="flex-1 overflow-hidden">
                     <p className="text-xs font-black text-gray-700 dark:text-gray-200 truncate">{selectedFile.name}</p>
@@ -278,49 +304,19 @@ const App: React.FC = () => {
                 </div>
               )}
               <form onSubmit={handleSendMessage} className="flex items-center gap-1">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  accept="*" 
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if(f) { 
-                      setSelectedFile(f); 
-                      if (f.type.startsWith('image/')) {
-                        const r = new FileReader(); 
-                        r.onload = () => setFilePreview(r.result as string); 
-                        r.readAsDataURL(f);
-                      } else {
-                        setFilePreview(null);
-                      }
+                <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if(f) { 
+                    setSelectedFile(f); 
+                    if (f.type.startsWith('image/')) {
+                      const r = new FileReader(); r.onload = () => setFilePreview(r.result as string); r.readAsDataURL(f);
                     }
-                  }} 
-                />
-                
-                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-2xl transition-all active:scale-90">
-                  <span className="material-symbols-rounded">add_circle</span>
-                </button>
-
-                <button type="button" onClick={toggleListening} className={`p-3 rounded-2xl transition-all active:scale-90 ${isListening ? 'bg-rose-500 text-white animate-pulse' : 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}>
-                  <span className="material-symbols-rounded">{isListening ? 'mic' : 'mic_none'}</span>
-                </button>
-
-                <input 
-                  type="text" 
-                  value={input} 
-                  onChange={(e) => setInput(e.target.value)} 
-                  placeholder={isListening ? "Mendengarkan..." : "Pesan atau unggah file..."} 
-                  className="flex-1 bg-transparent py-3 px-2 outline-none text-[15px] font-medium text-gray-800 dark:text-gray-100 placeholder:text-gray-400"
-                />
-
-                <button 
-                  type="submit" 
-                  disabled={isLoading || (!input.trim() && !selectedFile)} 
-                  className={`p-3 rounded-2xl transition-all active:scale-95 ${(!input.trim() && !selectedFile) ? 'text-gray-300' : 'bg-indigo-600 text-white shadow-lg'}`}
-                >
-                  <span className="material-symbols-rounded">arrow_upward</span>
-                </button>
+                  }
+                }} />
+                <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-2xl transition-all active:scale-90"><span className="material-symbols-rounded">add_circle</span></button>
+                <button type="button" onClick={toggleListening} className={`p-3 rounded-2xl transition-all active:scale-90 ${isListening ? 'bg-rose-500 text-white animate-pulse' : 'text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30'}`}><span className="material-symbols-rounded">{isListening ? 'mic' : 'mic_none'}</span></button>
+                <input type="text" value={input} onChange={(e) => setInput(e.target.value)} placeholder={isListening ? "Mendengarkan..." : "Pesan atau unggah file..."} className="flex-1 bg-transparent py-3 px-2 outline-none text-[15px] font-medium text-gray-800 dark:text-gray-100" />
+                <button type="submit" disabled={isLoading || (!input.trim() && !selectedFile)} className={`p-3 rounded-2xl transition-all active:scale-95 ${(!input.trim() && !selectedFile) ? 'text-gray-300' : 'bg-indigo-600 text-white shadow-lg'}`}><span className="material-symbols-rounded">arrow_upward</span></button>
               </form>
             </div>
           </div>
@@ -333,39 +329,12 @@ const App: React.FC = () => {
           { id: 'dashboard', label: 'Rekap', icon: 'analytics' },
           { id: 'contacts', label: 'Kontak', icon: 'contacts' }
         ].map((item) => (
-          <button 
-            key={item.id} 
-            onClick={() => setView(item.id as any)} 
-            className={`flex flex-col items-center gap-1 flex-1 py-1 ${view === item.id ? 'text-indigo-600' : 'text-gray-400'}`}
-          >
-            <div className={`px-4 py-1 rounded-xl ${view === item.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}>
-              <span className={`material-symbols-rounded text-2xl ${view === item.id ? 'FILL-1' : ''}`}>{item.icon}</span>
-            </div>
+          <button key={item.id} onClick={() => setView(item.id as any)} className={`flex flex-col items-center gap-1 flex-1 py-1 ${view === item.id ? 'text-indigo-600' : 'text-gray-400'}`}>
+            <div className={`px-4 py-1 rounded-xl ${view === item.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}><span className={`material-symbols-rounded text-2xl ${view === item.id ? 'FILL-1' : ''}`}>{item.icon}</span></div>
             <span className="text-[10px] font-black uppercase tracking-tighter">{item.label}</span>
           </button>
         ))}
       </nav>
-
-      {showHelp && (
-        <div className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md flex items-end sm:items-center justify-center p-4" onClick={() => setShowHelp(false)}>
-          <div className="bg-white dark:bg-gray-900 w-full max-w-sm rounded-t-[32px] sm:rounded-[32px] p-8 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
-            <h2 className="text-xl font-black mb-6 flex items-center gap-2 dark:text-white">
-              <span className="material-symbols-rounded text-indigo-600">info</span> Bantuan
-            </h2>
-            <div className="space-y-4">
-              <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-                <span className="material-symbols-rounded text-indigo-600">sync</span>
-                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Semua pengingat disinkronkan ke Google Tasks SMPN 21.</p>
-              </div>
-              <div className="flex gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700">
-                <span className="material-symbols-rounded text-indigo-600">upload_file</span>
-                <p className="text-xs font-bold leading-relaxed dark:text-gray-300">Unggah PDF nilai atau foto tabel untuk input data otomatis.</p>
-              </div>
-            </div>
-            <button onClick={() => setShowHelp(false)} className="w-full mt-8 bg-indigo-600 text-white py-4 rounded-2xl font-black">Lanjutkan</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -14,14 +14,14 @@ const ai = new GoogleGenAI({ apiKey });
 
 const addScheduleFn: FunctionDeclaration = {
   name: 'addSchedule',
-  description: 'Menambahkan jadwal mata pelajaran baru ke database lokal.',
+  description: 'Menambahkan jadwal mata pelajaran baru.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      day: { type: Type.STRING, description: 'Hari' },
-      subject: { type: Type.STRING, description: 'Mapel' },
-      time: { type: Type.STRING, description: 'Waktu' },
-      className: { type: Type.STRING, description: 'Kelas' },
+      day: { type: Type.STRING },
+      subject: { type: Type.STRING },
+      time: { type: Type.STRING },
+      className: { type: Type.STRING },
     },
     required: ['day', 'subject', 'time', 'className'],
   },
@@ -29,64 +29,50 @@ const addScheduleFn: FunctionDeclaration = {
 
 const addGradeFn: FunctionDeclaration = {
   name: 'addGrade',
-  description: 'Menambahkan nilai siswa.',
+  description: 'Menambahkan nilai akademik siswa.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama' },
-      subject: { type: Type.STRING, description: 'Mapel' },
-      score: { type: Type.NUMBER, description: 'Nilai' },
+      studentName: { type: Type.STRING },
+      subject: { type: Type.STRING },
+      score: { type: Type.NUMBER },
     },
     required: ['studentName', 'subject', 'score'],
   },
 };
 
-const addActivityFn: FunctionDeclaration = {
-  name: 'addActivity',
-  description: 'Mencatat kegiatan siswa.',
+const addBehaviorRecordFn: FunctionDeclaration = {
+  name: 'addBehaviorRecord',
+  description: 'Menambahkan rekap nilai kelakuan/sikap siswa.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      studentName: { type: Type.STRING, description: 'Nama' },
-      description: { type: Type.STRING, description: 'Kegiatan' },
-      category: { type: Type.STRING, enum: ['Akademik', 'Perilaku', 'Ekstrakurikuler'] },
-      date: { type: Type.STRING, description: 'Tanggal' },
+      studentName: { type: Type.STRING },
+      grade: { type: Type.STRING, enum: ['A', 'B', 'C', 'D'], description: 'Predikat nilai kelakuan' },
+      description: { type: Type.STRING, description: 'Catatan perilaku spesifik' },
+      date: { type: Type.STRING, description: 'Tanggal pencatatan' },
     },
-    required: ['studentName', 'description', 'category', 'date'],
+    required: ['studentName', 'grade', 'description', 'date'],
   },
 };
 
 const addReminderFn: FunctionDeclaration = {
   name: 'addReminder',
-  description: 'Menambahkan pengingat tugas yang akan disinkronkan ke Google Reminder/Tasks.',
+  description: 'Menambahkan pengingat ke Google Tasks.',
   parameters: {
     type: Type.OBJECT,
     properties: {
-      text: { type: Type.STRING, description: 'Isi Pengingat' },
-      date: { type: Type.STRING, description: 'Waktu/Tanggal (format bebas atau ISO)' },
+      text: { type: Type.STRING },
+      date: { type: Type.STRING },
       priority: { type: Type.STRING, enum: ['Rendah', 'Sedang', 'Tinggi'] },
     },
     required: ['text', 'date', 'priority'],
   },
 };
 
-const generateParentReportFn: FunctionDeclaration = {
-  name: 'generateParentReport',
-  description: 'Membuat laporan untuk orang tua via WhatsApp.',
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      studentName: { type: Type.STRING },
-      phoneNumber: { type: Type.STRING },
-      content: { type: Type.STRING },
-    },
-    required: ['studentName', 'phoneNumber', 'content'],
-  },
-};
-
 const syncContactsFn: FunctionDeclaration = {
   name: 'syncContacts',
-  description: 'Menyimpan kontak orang tua siswa.',
+  description: 'Menyimpan kontak orang tua.',
   parameters: {
     type: Type.OBJECT,
     properties: {
@@ -115,18 +101,16 @@ export const chatWithGemini = async (
       model: 'gemini-3-flash-preview',
       contents: [...history, { role: 'user', parts: userParts }],
       config: {
-        systemInstruction: `Anda adalah GuruMate AI, asisten pribadi multimodal yang terintegrasi dengan ekosistem Google (Gmail/Tasks).
+        systemInstruction: `Anda adalah GuruMate AI untuk SMPN 21 Kota Jambi.
         
-        KEMAMPUAN INTEGRASI GOOGLE:
-        - User (Guru) masuk menggunakan akun GMAIL.
-        - Setiap fungsi 'addReminder' akan disinkronkan ke Google Tasks/Reminder user. Pastikan Anda menginformasikan ini kepada user setelah mereka membuat pengingat.
+        TUGAS UTAMA:
+        - Membantu guru mengelola Jadwal, Nilai Akademik, dan Nilai Kelakuan (Sikap).
+        - Jika user mengunggah gambar/file berisi daftar nilai atau catatan perilaku, ekstrak datanya menggunakan function call 'addGrade' atau 'addBehaviorRecord'.
+        - Predikat Nilai Kelakuan: A (Sangat Baik), B (Baik), C (Cukup), D (Kurang).
+        - Setiap pengingat disinkronkan ke Google Tasks.
         
-        KEMAMPUAN MULTIMODAL:
-        - Anda dapat menganalisis GAMBAR dan DOKUMEN (PDF, Excel, Word).
-        - Ekstrak data dari file tersebut (misal: daftar nilai atau jadwal) dan gunakan function call yang sesuai.
-        
-        Berikan jawaban dalam Bahasa Indonesia yang sopan, ringkas, dan sangat membantu pekerjaan guru.`,
-        tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addActivityFn, addReminderFn, generateParentReportFn, syncContactsFn] }],
+        Berikan jawaban dalam Bahasa Indonesia yang ramah dan efisien.`,
+        tools: [{ functionDeclarations: [addScheduleFn, addGradeFn, addBehaviorRecordFn, addReminderFn, syncContactsFn] }],
       },
     });
 

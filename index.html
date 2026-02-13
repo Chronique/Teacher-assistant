@@ -5,7 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>GuruMate - SMPN 21 Kota Jambi</title>
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ai-gen-images/school-logos/main/smpn21jambi.png" />
+    <!-- Favicon merujuk ke file lokal logo.png -->
+    <link rel="icon" type="image/png" href="./logo.png" />
     <link rel="manifest" href="manifest.json" />
     <meta name="theme-color" content="#4f46e5" />
     <meta name="mobile-web-app-capable" content="yes" />
@@ -78,6 +79,7 @@
   </head>
   <body class="bg-gray-50 dark:bg-black text-gray-900 transition-colors duration-300">
     <div id="root" class="app-container"></div>
-    <script type="module" src="index.tsx"></script>
+    <!-- Cache busting v=1.1 untuk memaksa browser memuat ulang di Vercel -->
+    <script type="module" src="index.tsx?v=1.1"></script>
   </body>
 </html>
