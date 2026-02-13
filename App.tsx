@@ -26,7 +26,6 @@ const App: React.FC = () => {
       const saved = localStorage.getItem('gurumate_state');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Penting: Gabungkan INITIAL_STATE dengan data yang tersimpan agar properti baru (seperti contacts) selalu ada
         return { ...INITIAL_STATE, ...parsed };
       }
     } catch (e) {
@@ -50,7 +49,9 @@ const App: React.FC = () => {
   const [view, setView] = useState<'chat' | 'dashboard' | 'contacts'>('chat');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
-  const [headerLogoError, setHeaderLogoError] = useState(false);
+  
+  // State untuk menangani error gambar secara global
+  const [logoError, setLogoError] = useState(false);
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
@@ -228,14 +229,20 @@ const App: React.FC = () => {
         <div className="fixed top-4 left-4 right-4 z-[100] animate-slide-up">
           <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xs">S21</div>
+              <div className="w-10 h-10 bg-indigo-50 dark:bg-gray-800 rounded-xl flex items-center justify-center p-1.5 overflow-hidden">
+                {!logoError ? (
+                  <img src={schoolLogoUrl} className="w-full h-full object-contain" alt="S21" onError={() => setLogoError(true)} />
+                ) : (
+                  <div className="text-indigo-600 font-black text-[10px]">S21</div>
+                )}
+              </div>
               <div>
                 <p className="text-xs font-black dark:text-white">Instal GuruMate</p>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Akses cepat di layar utama</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SMPN 21 Kota Jambi</p>
               </div>
             </div>
             <div className="flex gap-2">
-              <button onClick={() => setShowInstallPopup(false)} className="px-3 py-2 text-[10px] font-black text-gray-400">TUTUP</button>
+              <button onClick={() => setShowInstallPopup(false)} className="px-3 py-2 text-[10px] font-black text-gray-400 uppercase tracking-tighter">Nanti</button>
               <button onClick={handleInstallApp} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100">PASANG</button>
             </div>
           </div>
@@ -245,12 +252,12 @@ const App: React.FC = () => {
       <header className="shrink-0 px-5 h-16 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {!headerLogoError ? (
+            {!logoError ? (
                <img 
                 src={schoolLogoUrl} 
                 className="w-full h-full object-contain" 
                 alt="Logo" 
-                onError={() => setHeaderLogoError(true)} 
+                onError={() => setLogoError(true)} 
               />
             ) : (
               <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-black text-[10px]">S21</div>

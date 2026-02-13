@@ -26,12 +26,12 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <div className="flex flex-col h-full bg-white dark:bg-black p-8 justify-between animate-fade-in">
       <div className="mt-16 space-y-4">
-        <div className="w-28 h-28 bg-white dark:bg-gray-900 rounded-3xl flex items-center justify-center p-3 shadow-xl shadow-indigo-100 dark:shadow-none mb-8 border border-gray-100 dark:border-gray-800">
+        <div className="w-28 h-28 bg-white dark:bg-gray-900 rounded-3xl flex items-center justify-center p-4 shadow-xl shadow-indigo-100 dark:shadow-none mb-8 border border-gray-100 dark:border-gray-800 overflow-hidden">
           {!logoError ? (
             <img 
               src={schoolLogoUrl} 
               alt="Logo SMPN 21" 
-              className="w-full h-full object-contain"
+              className="w-full h-full object-contain animate-fade-in"
               onError={() => setLogoError(true)}
             />
           ) : (
