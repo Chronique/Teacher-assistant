@@ -8,8 +8,7 @@ interface LoginProps {
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
-  const [logoError, setLogoError] = useState(false);
-  const schoolLogoUrl = "./logo.png";
+  const schoolLogoUrl = "/logo.png"; // Gunakan root-relative path
 
   const handleGoogleLogin = () => {
     setLoading(true);
@@ -27,18 +26,18 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
     <div className="flex flex-col h-full bg-white dark:bg-black p-8 justify-between animate-fade-in">
       <div className="mt-16 space-y-4">
         <div className="w-28 h-28 bg-white dark:bg-gray-900 rounded-3xl flex items-center justify-center p-4 shadow-xl shadow-indigo-100 dark:shadow-none mb-8 border border-gray-100 dark:border-gray-800 overflow-hidden">
-          {!logoError ? (
-            <img 
-              src={schoolLogoUrl} 
-              alt="Logo SMPN 21" 
-              className="w-full h-full object-contain animate-fade-in"
-              onError={() => setLogoError(true)}
-            />
-          ) : (
-            <div className="w-full h-full bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-black text-2xl">
-              S21
-            </div>
-          )}
+          <img 
+            src={schoolLogoUrl} 
+            alt="Logo SMPN 21" 
+            className="w-full h-full object-contain animate-fade-in"
+            onError={(e) => {
+              // Jika gagal, coba lagi sekali dengan cache-buster
+              const target = e.target as HTMLImageElement;
+              if (!target.src.includes('?v=')) {
+                target.src = schoolLogoUrl + "?v=" + Date.now();
+              }
+            }}
+          />
         </div>
         <h1 className="text-4xl font-black text-gray-900 dark:text-white leading-tight tracking-tighter">
           GuruMate<br/><span className="text-indigo-600">SMPN 21 Kota Jambi.</span>

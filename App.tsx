@@ -50,24 +50,33 @@ const App: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPopup, setShowInstallPopup] = useState(false);
   
-  // State untuk menangani error gambar secara global
-  const [logoError, setLogoError] = useState(false);
-  
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const schoolLogoUrl = "./logo.png";
+  const schoolLogoUrl = "/logo.png";
 
   useEffect(() => {
-    window.addEventListener('beforeinstallprompt', (e) => {
+    const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
-      setTimeout(() => setShowInstallPopup(true), 5000);
-    });
-    return () => window.removeEventListener('beforeinstallprompt', () => {});
+      // Cek apakah user sudah menginstal (standalone mode)
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+      if (!isStandalone) {
+        setTimeout(() => setShowInstallPopup(true), 3000);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Cek juga jika sudah diinstal tapi event tidak fired
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallPopup(false);
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   useEffect(() => {
@@ -104,9 +113,14 @@ const App: React.FC = () => {
   }, [messages, isLoading, view, state.user]);
 
   const handleInstallApp = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      alert("Aplikasi siap diinstal. Cari menu 'Tambahkan ke Layar Utama' di browser Anda.");
+      setShowInstallPopup(false);
+      return;
+    }
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to install prompt: ${outcome}`);
     setDeferredPrompt(null);
     setShowInstallPopup(false);
   };
@@ -230,15 +244,11 @@ const App: React.FC = () => {
           <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl p-4 shadow-2xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-indigo-50 dark:bg-gray-800 rounded-xl flex items-center justify-center p-1.5 overflow-hidden">
-                {!logoError ? (
-                  <img src={schoolLogoUrl} className="w-full h-full object-contain" alt="S21" onError={() => setLogoError(true)} />
-                ) : (
-                  <div className="text-indigo-600 font-black text-[10px]">S21</div>
-                )}
+                <img src={schoolLogoUrl} className="w-full h-full object-contain" alt="Logo" />
               </div>
               <div>
-                <p className="text-xs font-black dark:text-white">Instal GuruMate</p>
-                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SMPN 21 Kota Jambi</p>
+                <p className="text-xs font-black dark:text-white uppercase tracking-tighter">Pasang GuruMate</p>
+                <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">SMPN 21 Kota Jambi</p>
               </div>
             </div>
             <div className="flex gap-2">
@@ -252,16 +262,15 @@ const App: React.FC = () => {
       <header className="shrink-0 px-5 h-16 flex justify-between items-center bg-white/90 dark:bg-gray-900/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 z-50">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center p-1 shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-            {!logoError ? (
-               <img 
+             <img 
                 src={schoolLogoUrl} 
                 className="w-full h-full object-contain" 
                 alt="Logo" 
-                onError={() => setLogoError(true)} 
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  if (!target.src.includes('?v=')) target.src = schoolLogoUrl + "?v=" + Date.now();
+                }}
               />
-            ) : (
-              <div className="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-black text-[10px]">S21</div>
-            )}
           </div>
           <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tighter">GuruMate</h1>
         </div>
@@ -321,7 +330,7 @@ const App: React.FC = () => {
                 </div>
               )}
               <form onSubmit={handleSendMessage} className="flex items-center gap-1">
-                <input type="file" ref={fileInputRef} className="hidden" onChange={(e) => {
+                <input type="file" autoFocus ref={fileInputRef} className="hidden" onChange={(e) => {
                   const f = e.target.files?.[0];
                   if(f) { 
                     setSelectedFile(f); 
